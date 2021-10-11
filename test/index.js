@@ -28,7 +28,7 @@ describe('load_prometheus_json', function () {
     done()
   })
 
-  it('jsontializes enabled boolean', function (done) {
+  it('initializes enabled boolean', function (done) {
     this.plugin.load_prometheus_json()
     assert.equal(this.plugin.cfg.prometheus.enabled, true, this.plugin.cfg)
     done()
