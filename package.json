@@ -1,0 +1,36 @@
+{
+  "name": "haraka-plugin-prometheus",
+  "version": "1.0.0",
+  "description": "A Haraka plugin for collecting metrics into Prometheus.",
+  "main": "index.js",
+  "scripts": {
+    "lint": "npx eslint *.js test/*.js",
+    "lintfix": "npx eslint --fix *.js test/*.js",
+    "versions": "npx dependency-version-checker check",
+    "test": "npx mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mailprotector/haraka-plugin-prometheus.git"
+  },
+  "keywords": [
+    "haraka",
+    "prometheus",
+    "smtp"
+  ],
+  "author": "Mailprotector <npm@mailprotector.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mailprotector/haraka-plugin-prometheus/issues"
+  },
+  "homepage": "https://github.com/mailprotector/haraka-plugin-prometheus#readme",
+  "devDependencies": {
+    "eslint": "*",
+    "eslint-plugin-haraka": "*",
+    "haraka-test-fixtures": "*",
+    "mocha": "*"
+  },
+  "dependencies": {
+    "prom-client": "^14.0.0"
+  }
+}
