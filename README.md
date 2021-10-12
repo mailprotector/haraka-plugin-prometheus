@@ -3,7 +3,7 @@ A Haraka plugin for collecting metrics into Prometheus.
 
 ## Enable Prometheus Plugin
 
-1. Enable Haraka's HTTP server (see `listen` in http.ini) to listen on prometheus port (9904)[https://github.com/prometheus/prometheus/wiki/Default-port-allocations]
+1. Enable Haraka's HTTP server (see `listen` in http.ini) to listen on [prometheus port 9904](https://github.com/prometheus/prometheus/wiki/Default-port-allocations)
 2. Add 'prometheus' to config/plugins
 3. Configure the plugin (see below)
 
