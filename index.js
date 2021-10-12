@@ -7,23 +7,60 @@ exports.register = function () {
 
   plugin.load_prometheus_json();
 
-  const hooks = [
-    'connect_init',
-    'deny',
-    'queue_ok',
-    'disconnect'
-  ];
+  if (plugin.cfg.prometheus.enabled == true) {
+    if (plugin.cfg.prometheus.default_labels) {
+      prometheus_client.register.setDefaultLabels(plugin.cfg.prometheus.default_labels);
+    }
 
-  for (const h in hooks) {
-    plugin.register_hook(hooks[h], `prometheus_${hooks[h]}`);
+    if (plugin.cfg.prometheus.prefix) {
+      const prefix = `${plugin.cfg.prometheus.prefix}_`;
+      prometheus_client.collectDefaultMetrics({ prefix });
+    }
+
+    const hooks = [
+      'connect_init',
+      'lookup_rdns',
+      'connect',
+      'capabilities',
+      'unrecognized_command',
+      'helo',
+      'ehlo',
+      'quit',
+      'vrfy',
+      'noop',
+      'rset',
+      'mail',
+      'rcpt',
+      'rcpt_ok',
+      'data_post',
+      'max_data_exceeded',
+      'queue',
+      'queue_outbound',
+      'queue_ok',
+      'reset_transaction',
+      'deny',
+      'get_mx',
+      'deferred',
+      'bounce',
+      'delivered',
+      'send_email',
+      'disconnect'
+    ];
+
+    for (const h in hooks) {
+      plugin.register_hook(hooks[h], 'prom_hook');
+    }
+
+    plugin.register_hook('disconnect', 'prom_disconnect');
   }
+
 }
 
 exports.hook_init_http = function (next, server) {
   const plugin = this;
 
-  if(plugin.cfg.prometheus.enabled == true) {
-    
+  if (plugin.cfg.prometheus.enabled == true) {
+
     server.http.app.get('/metrics', async (req, res) => {
       try {
         res.set('Content-Type', prometheus_client.register.contentType);
@@ -32,7 +69,7 @@ exports.hook_init_http = function (next, server) {
         res.status(500).end(ex);
       }
     });
-    
+
     // server.get('/metrics/counter', async (req, res) => {
     //   try {
     //     res.set('Content-Type', prometheus_client.register.contentType);
@@ -41,77 +78,68 @@ exports.hook_init_http = function (next, server) {
     //     res.status(500).end(ex);
     //   }
     // });
-          
+
     plugin.loginfo('prometheus init_http done, metrics exposed on /metrics endpoint');
   }
   next();
 }
 
-exports.prom_connect_init = function (next, connection, msg) {
+exports.prom_hook = function (next, connection) {
   const plugin = this;
 
-  plugin.logdebug(`prometheus connect_init saw: ${msg}`, connection);
-  prometheus_client.Counter(plugin.prepare_metric_name('connect_init_total'), `Total connect_init hook calls.`, plugin.cfg.prometheus.label_names).inc(1);
-  
-  next();
-}
+  plugin.logdebug(`prometheus ${connection.hook} started`, connection);
+  new prometheus_client.Counter({
+    name: plugin.prepare_metric_name(`${connection.hook}_total`),
+    help: `Total ${connection.hook} hook calls.`
+  }).inc(1);
 
-exports.prom_deny = function (next, connection, params) {
-  const plugin = this;
-  const pi_code = params[0];
-  // let pi_msg    = params[1];
-  const pi_name = params[2];
-  // let pi_function = params[3];
-  // let pi_params   = params[4];
-  const pi_hook = params[5];
-
-  plugin.logdebug(`prometheus deny saw: ${pi_name} ${pi_code} deny from ${pi_hook}`, connection);
-  prometheus_client.Counter(plugin.prepare_metric_name(`${pi_hook}_total`), `Total ${pi_hook} hook calls.`, plugin.cfg.prometheus.label_names).inc(1);
-  prometheus_client.Counter(plugin.prepare_metric_name(`${pi_hook}_${pi_code}_total`), `Total ${pi_hook} hook calls with code ${pi_code}.`, plugin.cfg.prometheus.label_names).inc(1);
-
-  next();
-}
-
-exports.prom_queue_ok = function (next, connection, msg) {
-  const plugin = this;
-
-  plugin.logdebug(`prometheus queue_ok saw: ${msg}`, connection);
-  prometheus_client.Counter(plugin.prepare_metric_name('queue_ok_total'), `Total queue_ok hook calls.`, plugin.cfg.prometheus.label_names).inc(1);
-  
   next();
 }
 
 exports.prom_disconnect = function (next, connection) {
   const plugin = this;
 
-  plugin.logdebug(`prometheus disconnect saw: ${connection.transaction.uuid}`, connection);
-  prometheus_client.Counter(plugin.prepare_metric_name('disconnect_total'), `Total disconnect hook calls.`, plugin.cfg.prometheus.label_names).inc(1);
-
   plugin.process_metrics_from_notes(connection);
 
   next();
 }
 
-//[{ type: 'counter', name 'foo', help: '', value: 1, label_names: ['foo', 'bar'] }]
-exports.process_metrics_from_notes = function(connection) {
+// connection.notes.prometheus_metrics = [{ type: 'counter', name 'foo', help: '', value: 1, label_names: ['foo', 'bar'] }]
+exports.process_metrics_from_notes = function (connection) {
   const plugin = this;
 
-  if(connection.notes.prometheus_metrics) {
+  if (connection.notes.prometheus_metrics) {
     for (const m in connection.notes.prometheus_metrics) {
       const metric = connection.notes.prometheus_metrics[m];
       plugin.logdebug(`prometheus process_metrics_from_notes saw: name=${metric.name}, value=${metric.value}, help=${metric.help}, label_names=${metric.label_names}`, connection);
       switch (metric.type) {
         case 'counter':
-          prometheus_client.Counter(plugin.prepare_metric_name(metric.name), metric.help, plugin.prepare_label_names(metric.label_names)).inc(metric.value);
+          new prometheus_client.Counter({
+            name: plugin.prepare_metric_name(metric.name),
+            help: metric.help,
+            labelNames: (metric.label_names ? metric.label_names : [])
+          }).inc(metric.value);
           break;
         case 'gauge':
-          prometheus_client.Gauge(plugin.prepare_metric_name(metric.name), metric.help, plugin.prepare_label_names(metric.label_names)).set(metric.value);
+          new prometheus_client.Gauge({
+            name: plugin.prepare_metric_name(metric.name),
+            help: metric.help,
+            labelNames: (metric.label_names ? metric.label_names : [])
+          }).set(metric.value);
           break;
         case 'histogram':
-          prometheus_client.Histogram(plugin.prepare_metric_name(metric.name), metric.help, plugin.prepare_label_names(metric.label_names)).observe(metric.value);
+          new prometheus_client.Histogram({
+            name: plugin.prepare_metric_name(metric.name),
+            help: metric.help,
+            labelNames: (metric.label_names ? metric.label_names : [])
+          }).observe(metric.value);
           break;
         case 'summary':
-          prometheus_client.Summary(plugin.prepare_metric_name(metric.name), metric.help, plugin.prepare_label_names(metric.label_names)).observe(metric.value);
+          new prometheus_client.Summary({
+            name: plugin.prepare_metric_name(metric.name),
+            help: metric.help,
+            labelNames: (metric.label_names ? metric.label_names : [])
+          }).observe(metric.value);
           break;
         default:
           plugin.logerror(`prometheus saw unknown metric type: ${metric.type}`, connection);
@@ -120,22 +148,14 @@ exports.process_metrics_from_notes = function(connection) {
   }
 }
 
-exports.prepare_metric_name = function(metric_name) {
-  return `${plugin.cfg.prometheus.prefix}_${metric_name}`;
-}
+exports.prepare_metric_name = function (metric_name) {
+  const plugin = this;
 
-exports.prepare_label_names = function(label_names) {
-  if (plugin.cfg.prometheus.prefix && label_names) {
-    return [...plugin.cfg.prometheus.label_names, ...label_names];
-  }
-  else if (plugin.cfg.prometheus.prefix) {
-    return plugin.cfg.prometheus.label_names;
-  }
-  else if (label_names) {
-    return label_names;
+  if (plugin.cfg.prometheus.prefix) {
+    return `${plugin.cfg.prometheus.prefix}_${metric_name}`;
   }
   else {
-    return [];
+    return metric_name;
   }
 }
 

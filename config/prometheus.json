@@ -2,6 +2,6 @@
   "prometheus": {
     "enabled": true,
     "prefix": "haraka",
-    "label_names": []
+    "default_labels": { "service_name": "haraka" }
   }
 }
