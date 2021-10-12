@@ -7,8 +7,16 @@ exports.register = function () {
 
   plugin.load_prometheus_json();
 
-  plugin.register_hook('deny', 'prom_deny');
-  plugin.register_hook('queue_ok', 'prom_queue_ok');
+  const hooks = [
+    'connect_init',
+    'deny',
+    'queue_ok',
+    'disconnect'
+  ];
+
+  for (const h in hooks) {
+    plugin.register_hook(hooks[h], `prometheus_${hooks[h]}`);
+  }
 }
 
 exports.hook_init_http = function (next, server) {
@@ -39,6 +47,15 @@ exports.hook_init_http = function (next, server) {
   next();
 }
 
+exports.prom_connect_init = function (next, connection, msg) {
+  const plugin = this;
+
+  plugin.logdebug(`prometheus connect_init saw: ${msg}`, connection);
+  prometheus_client.Counter(plugin.prepare_metric_name('connect_init_total'), `Total connect_init hook calls.`, plugin.cfg.prometheus.label_names).inc(1);
+  
+  next();
+}
+
 exports.prom_deny = function (next, connection, params) {
   const plugin = this;
   const pi_code = params[0];
@@ -52,8 +69,6 @@ exports.prom_deny = function (next, connection, params) {
   prometheus_client.Counter(plugin.prepare_metric_name(`${pi_hook}_total`), `Total ${pi_hook} hook calls.`, plugin.cfg.prometheus.label_names).inc(1);
   prometheus_client.Counter(plugin.prepare_metric_name(`${pi_hook}_${pi_code}_total`), `Total ${pi_hook} hook calls with code ${pi_code}.`, plugin.cfg.prometheus.label_names).inc(1);
 
-  plugin.process_metrics_from_notes(connection);
-
   next();
 }
 
@@ -61,8 +76,17 @@ exports.prom_queue_ok = function (next, connection, msg) {
   const plugin = this;
 
   plugin.logdebug(`prometheus queue_ok saw: ${msg}`, connection);
-  prometheus_client.Counter(plugin.prepare_metric_name(`$queue_ok_total`), `Total queue_ok hook calls.`, plugin.cfg.prometheus.label_names).inc(1);
+  prometheus_client.Counter(plugin.prepare_metric_name('queue_ok_total'), `Total queue_ok hook calls.`, plugin.cfg.prometheus.label_names).inc(1);
   
+  next();
+}
+
+exports.prom_disconnect = function (next, connection) {
+  const plugin = this;
+
+  plugin.logdebug(`prometheus disconnect saw: ${connection.transaction.uuid}`, connection);
+  prometheus_client.Counter(plugin.prepare_metric_name('disconnect_total'), `Total disconnect hook calls.`, plugin.cfg.prometheus.label_names).inc(1);
+
   plugin.process_metrics_from_notes(connection);
 
   next();

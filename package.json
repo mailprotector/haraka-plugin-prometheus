@@ -1,6 +1,6 @@
 {
   "name": "@mailprotector/haraka-plugin-prometheus",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A Haraka plugin for collecting metrics into Prometheus.",
   "main": "index.js",
   "scripts": {
