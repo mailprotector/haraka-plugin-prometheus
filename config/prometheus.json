@@ -1,5 +1,7 @@
 {
   "prometheus": {
-    "enabled": true
+    "enabled": true,
+    "prefix": "haraka",
+    "label_names": []
   }
 }
