@@ -1,7 +1,6 @@
 'use strict'
 
 const prometheus_client = require('prom-client');
-const register = prometheus_client.register;
 
 exports.register = function () {
   const plugin = this;
@@ -19,8 +18,8 @@ exports.hook_init_http = function (next, server) {
     
     server.http.app.get('/metrics', async (req, res) => {
       try {
-        res.set('Content-Type', register.contentType);
-        res.end(await register.metrics());
+        res.set('Content-Type', prometheus_client.register.contentType);
+        res.end(await prometheus_client.register.metrics());
       } catch (ex) {
         res.status(500).end(ex);
       }
@@ -28,7 +27,7 @@ exports.hook_init_http = function (next, server) {
     
     // server.get('/metrics/counter', async (req, res) => {
     //   try {
-    //     res.set('Content-Type', register.contentType);
+    //     res.set('Content-Type', prometheus_client.register.contentType);
     //     res.end(await prometheus_client.getSingleMetricAsString('test_counter'));
     //   } catch (ex) {
     //     res.status(500).end(ex);
