@@ -16,6 +16,9 @@ exports.register = function () {
       const prefix = `${plugin.cfg.prometheus.prefix}_`;
       prometheus_client.collectDefaultMetrics({ prefix });
     }
+    else {
+      prometheus_client.collectDefaultMetrics();
+    }
 
     const hooks = [
       'connect_init',
