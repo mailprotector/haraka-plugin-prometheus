@@ -1,5 +1,5 @@
 {
-  "name": "haraka-plugin-prometheus",
+  "name": "@mailprotector/haraka-plugin-prometheus",
   "version": "1.0.0",
   "description": "A Haraka plugin for collecting metrics into Prometheus.",
   "main": "index.js",
@@ -18,7 +18,7 @@
     "prometheus",
     "smtp"
   ],
-  "author": "Mailprotector <npm@mailprotector.com>",
+  "author": "Mailprotector Team <npm@mailprotector.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/mailprotector/haraka-plugin-prometheus/issues"

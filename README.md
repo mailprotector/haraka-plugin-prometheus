@@ -12,3 +12,7 @@ A Haraka plugin for collecting metrics into Prometheus.
 Config options are set in prometheus.json.
 
 * enabled: boolean, default true, whether to enable the plugin
+
+##
+
+[About Mailprotector](https://mailprotector.com/about-mailprotector)
