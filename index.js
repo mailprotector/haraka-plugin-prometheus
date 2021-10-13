@@ -163,7 +163,7 @@ exports.prepare_metric_name = function (metric_name) {
 }
 
 exports.load_prometheus_json = function () {
-  const plugin = this
+  const plugin = this;
 
   plugin.cfg = plugin.config.get('prometheus.json', {
     booleans: [
