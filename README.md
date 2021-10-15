@@ -1,23 +1,38 @@
 # haraka-plugin-prometheus
 A Haraka plugin for collecting metrics into Prometheus.
 
-## Enable Prometheus Plugin
+## Install
 
-1. Enable Haraka's HTTP server (see `listen` in http.ini) to listen on [prometheus port 9904](https://github.com/prometheus/prometheus/wiki/Default-port-allocations)
-2. Add 'prometheus' to config/plugins
-3. Configure the plugin (see below)
+Install with npm
+```bash
+npm install @mailprotector/haraka-plugin-prometheus --save
+```
+
+## Setup
+### HTTP Server
+
+Enable Haraka's HTTP server (see `listen` in http.ini) to listen on [port 9904](https://github.com/prometheus/prometheus/wiki/Default-port-allocations)
 
 http.ini:
 ```ini
 listen=[::]:9904
 ```
 
-## Config
+### Enable Plugin
+Add to `plugin` file in the haraka config folder
+```text
+@mailprotector/haraka-plugin-prometheus
+```
 
-Config options are set in prometheus.json.
+### Config
 
-* enabled: boolean, default true, whether to enable the plugin
+Config options are set in `prometheus.json`:
 
+| Parameter      | Description                              | Type    | Default Value |
+| -------------- | ---------------------------------------- | ------- | ------------- |
+| enabled        | whether to enable the plugin             | boolean | true          |
+| prefix         | prefix that gets appended to all metrics | string  | none          |
+| default_labels | labels to add to all metrics             | map     | none          |
 
 ## Sending metrics from other plugins
 
