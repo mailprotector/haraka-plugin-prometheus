@@ -51,6 +51,6 @@ connection.notes.prometheus_metrics = [
 
 ##
 
-![alt text](https://i1.wp.com/mailprotector.com/wp-content/uploads/2020/03/cropped-logo-2x.png)
+![alt text](https://mailprotector.com/wp-content/uploads/2022/07/MP-Left-RGB.png)
 
 [About Mailprotector](https://mailprotector.com/about-mailprotector)
