@@ -2,6 +2,8 @@
 
 const prometheus_client = require('prom-client');
 
+const metrics = {};
+
 exports.register = function () {
   const plugin = this;
 
@@ -51,6 +53,12 @@ exports.register = function () {
     ];
 
     for (const h in hooks) {
+      if (!metrics[hooks[h]]) {
+        metrics[hooks[h]] = new prometheus_client.Counter({
+          name: plugin.prepare_metric_name(`${hooks[h]}_total`),
+          help: `Total ${hooks[h]} hook calls.`
+        });
+      }
       plugin.register_hook(hooks[h], 'prom_hook');
     }
 
@@ -91,10 +99,7 @@ exports.prom_hook = function (next, connection) {
   const plugin = this;
 
   plugin.logdebug(`prometheus ${connection.hook} started`, connection);
-  new prometheus_client.Counter({
-    name: plugin.prepare_metric_name(`${connection.hook}_total`),
-    help: `Total ${connection.hook} hook calls.`
-  }).inc(1);
+  metrics[connection.hook].inc(1);
 
   next();
 }
